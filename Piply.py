@@ -18,7 +18,7 @@ class Piply:
     main_mode_selected_index, main_mode_options = 0, ("Now", "Lib", "Cfg")
     now_mode_returns_to, now_mode_pitch_seek = 'main', 'seek'
     lib_mode_current_items =  ()
-    lib_mode_root_dir, lib_mode_current_dir = "/mnt/media", "/mnt/media"
+    lib_mode_root_dir, lib_mode_current_dir = "/mnt/media/Music", "/mnt/media/Music"
     lib_mode_scroll_position, lib_mode_letter_position = 0, 0
     lib_mode_selecting_letter, lib_mode_arrow_position_top = True, True
 
