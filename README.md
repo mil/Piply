@@ -1,35 +1,25 @@
-Pisample
-========
+Piply
+=====
 
-Interface for both audio playback and recording on the Raspberry Pi. More info to come!
+Interface for audio playback on the the Raspberry Pi. Built atop the Adafruit i2c 16x2 LCD Pi Plate. Intended to transform Raspberry Pi into standalone music playback device. 
 
-Main Modes / Capbilities:
-------------------------------
+Modes / Capbilities:
+--------------------
 - Filebrowser (Lib)
-    * Access multiple media mounts
-        - Specify hooks for mounting each source
-        - I.e. Mount USB before accessing
-        - I.e. Mount host to folder via SSHfs before accessing
-    * File browser 
-        - First folder (optionally) select by letter A-Z
-        - Nested folders simple Up and Down browser
-        - Play individual MP3/FLAC/WAV
-        - Play stream files
-        - Play albums (contents of a folder / a m3u playlist)
+    * (Optionally) First folder select by letter A-Z
+        - Intended for browsing Artists
+    * Nested folders simple Up, Down, Select browser
+    * Play individual MP3/FLAC/WAV
+    * Play stream files
+    * Play albums 
+        - (m3u playlist or contents of folder in alphabetical order)
 - Now Playing (Now)
     * Pause / Play
     * Seek back and forward 
-    * Pitch up and down
-    * Timestretch - Slow/Speed samples w/o affecting pitch
-    * NO Queue support beyond 1 Album/File/Sample at a time
+    * Speed up and down music
     * Skip current track
-- Sampler (Smp)
-    * Record samples from PCM / Line In
-    * Playback samples
-    * All manipulations in (Now) available in playback
 - Config (Cfg)
     * Audio Volume Control
-
 
 Hardware:
 ---------
