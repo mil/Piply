@@ -1,33 +1,39 @@
 Pisample
 ========
-This is a tool for DIY music production, under heavy development, but basically this will serve to act as a filebrowser/sampler/playback device. The interface will sample (from line-in) and be able to playback those samples or files from the filebrowser and pitch up/down (major feature). I may also add in some Sox effects to apply to samples.
 
-Interface Modes / Capbilities:
+Interface for both audio playback and recording on the Raspberry Pi. More info to come!
+
+Main Modes / Capbilities:
 ------------------------------
-- Filebrowser (Mnt)
+- Filebrowser (Lib)
     * Access multiple media mounts
-        - Specify hooks to mount each source
+        - Specify hooks for mounting each source
         - I.e. Mount USB before accessing
         - I.e. Mount host to folder via SSHfs before accessing
     * File browser 
-        - First folder select by letter A-Z
+        - First folder (optionally) select by letter A-Z
         - Nested folders simple Up and Down browser
         - Play individual MP3/FLAC/WAV
         - Play stream files
-        - Play albums (all contents of folder / from m3u playlist)
-- Playback (Aud)
+        - Play albums (contents of a folder / a m3u playlist)
+- Now Playing (Now)
     * Pause / Play
-    * Seek back and forward
+    * Seek back and forward 
     * Pitch up and down
+    * Timestretch - Slow/Speed samples w/o affecting pitch
     * NO Queue support beyond 1 Album/File/Sample at a time
-    * Backend mplayer
-- Sampler (Smpl)
-    * Record samples from Audio Interface Line In
-    * (Maybe) Apply Sox Effects to Samples
-    * Playback Samples
+    * Skip current track
+- Sampler (Smp)
+    * Record samples from PCM / Line In
+    * Playback samples
+    * All manipulations in (Now) available in playback
+- Config (Cfg)
+    * Audio Volume Control
+
 
 Hardware:
 ---------
 - Raspberry Pi ($35)
 - Adafruit i2c 16x2 RGB LCD Pi Plate ($20)
-- USB Audio Interface/Mixer ($50)
+- (Optional) USB Audio Interface/Mixer ($30)
+    * Behringer 302USB
