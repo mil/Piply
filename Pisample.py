@@ -70,13 +70,15 @@ class PiSample:
 
     # Main Mode
     def mode_main_menu(self):
-        message = "   "
+        message = "  "
         if self.player.filename != None:
             message += "P " if self.player.paused else "> "
-        message += "Pisample\n"
+        else:
+            message += "  "
+        message += ".Piply,.\n"
         for index, option in enumerate(self.main_mode_options):
             if index == self.main_mode_selected_index:
-                message += str(chr(126))
+                message += " " + str(chr(126))
             else:
                 message += "  "
             message += option + ""
