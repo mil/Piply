@@ -24,7 +24,7 @@ class PiSample:
     curr_char = 0
 
     main_mode_selected_index = 0
-    main_mode_options = ("Now", "Lib", "Smp", "Cfg")
+    main_mode_options = ("Now", "Lib", "Cfg")
 
     now_mode_returns_to = 'main'
     now_mode_pitch_seek = 'seek' 
@@ -78,7 +78,7 @@ class PiSample:
             if index == self.main_mode_selected_index:
                 message += str(chr(126))
             else:
-                message += " "
+                message += "  "
             message += option + ""
         self.lcd.clear()
         self.lcd.message(message)
@@ -351,18 +351,25 @@ class PiSample:
                 last_date = now
                 self.redraw_menu()
 
+
+
+
             current_button = None
-            if self.lcd.buttonPressed(self.lcd.LEFT):
-                current_button = "left"
-            if self.lcd.buttonPressed(self.lcd.RIGHT):
-                current_button = "right"
-            if self.lcd.buttonPressed(self.lcd.UP):
-                current_button = "up"
-            if self.lcd.buttonPressed(self.lcd.DOWN):
-                current_button = "down"
-            if self.lcd.buttonPressed(self.lcd.SELECT):
-                current_button = "select"
+            btn_map = {
+                    self.lcd.LEFT : "left",
+                    self.lcd.RIGHT : "right",
+                    self.lcd.UP: "up",
+                    self.lcd.DOWN: "down",
+                    self.lcd.SELECT: "select"
+                    }
+            for k in btn_map:
+                print(self)
+                if (self.lcd.buttonPressed(k)):
+                    current_button = btn_map[k]
             if current_button != None and current_button != self.last_button:
                 self.button_press(current_button)
             self.last_button = current_button
+
+
+
 PiSample()
