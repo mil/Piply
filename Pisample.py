@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 from time import sleep
 import os, sys, datetime, tempfile
 import alsaaudio
@@ -363,7 +363,6 @@ class PiSample:
                     self.lcd.SELECT: "select"
                     }
             for k in btn_map:
-                print(self)
                 if (self.lcd.buttonPressed(k)):
                     current_button = btn_map[k]
             if current_button != None and current_button != self.last_button:
