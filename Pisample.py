@@ -30,7 +30,7 @@ class PiSample:
     now_mode_pitch_seek = 'seek' 
 
     lib_mode_current_items =  ()
-    lib_mode_root_dir, lib_mode_current_dir = "/mnt/x300", "/mnt/x300"
+    lib_mode_root_dir, lib_mode_current_dir = "/mnt/x61", "/mnt/x61"
     lib_mode_scroll_position, lib_mode_letter_position = 0, 0
     lib_mode_selecting_letter, lib_mode_arrow_position_top = True, True
 
