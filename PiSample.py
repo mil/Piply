@@ -111,6 +111,8 @@ class PiSample:
             if btn == "select" or btn == "right":
                 self.lib_mode_current_dir += "/" + self.lib_mode_current_items[self.lib_mode_scroll_position]
                 self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
+                if os.path.isfile(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[0]):
+                    self.lib_mode_current_items.insert(0, "Play Album")
                 self.lib_mode_scroll_position = 0
                 self.lib_mode_arrow_position_top = True
             if btn == "left":
