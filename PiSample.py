@@ -1,10 +1,13 @@
 #!/usr/bin/env python
+import os
 from time import sleep
 from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
-import os
-import subprocess
+from mplayer import Player
 
 class PiSample:
+    player = Player()
+    player.exec_path = "/usr/bin/mplayer"
+    player_state = 'paused'
     letters = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
     lcd  = None
     last_button = None
@@ -27,6 +30,7 @@ class PiSample:
         self.lcd = Adafruit_CharLCDPlate()
         self.lcd.clear()
         self.mode_main_menu()
+        #self.mode_char_test()
         self.loop()
 
     def mode_char_test(self):
@@ -67,9 +71,10 @@ class PiSample:
         message = ""
 
         if self.lib_mode_current_dir == self.lib_mode_root_dir and self.lib_mode_selecting_letter:
+            message += "< "
             for idx, letter in enumerate(self.letters):
-                message += ("  ^\n" if idx == 13 else "")
-                message += (letter.upper() if self.lib_mode_letter_position == idx else letter)    
+                message += ("\n  " if idx == 13 else "")
+                message += ((str(chr(126)) + letter.upper()) if self.lib_mode_letter_position == idx else letter)    
         else:
             # Only sow current letter for artist
             row_1 = ""
@@ -82,7 +87,7 @@ class PiSample:
 
             rwl = list(row_1)
             blank_space = len(rwl)
-            if blank_space < 15:
+            if blank_space <= 15:
                 while blank_space <= 15:
                     rwl.append(" ")
                     blank_space+=1
@@ -159,10 +164,10 @@ class PiSample:
     def play_audio(self, fp):
         self.lcd.clear()
         self.lcd.message("Playing!")
-        subprocess.Popen(["/usr/bin/killall", "mplayer"], stdout = subprocess.PIPE)
-        print "WOO"
-        subprocess.Popen(["/usr/bin/mplayer", fp], stdout = subprocess.PIPE)
-        print "Doo"
+        self.player.loadfile(fp)
+        if self.player_state == 'paused':
+            self.player.pause()
+            self.player_state = 'playing'
 
         
 
