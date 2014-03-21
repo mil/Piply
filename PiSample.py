@@ -2,6 +2,7 @@
 from time import sleep
 from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 import os
+import subprocess
 
 class PiSample:
     letters = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
@@ -12,7 +13,7 @@ class PiSample:
     curr_char = 0
 
     main_mode_selected_index = 0
-    main_mode_options = ("Cmd", "Lib", "Pls")
+    main_mode_options = ("Lib", "Smpl", "Now")
 
     lib_mode_root_dir = "/mnt/x300"
     lib_mode_current_dir = "/mnt/x300"
@@ -124,12 +125,20 @@ class PiSample:
                 self.lib_mode_scroll_position -= 1
                 self.lib_mode_arrow_position_top = True
             if btn == "select" or btn == "right":
-                self.lib_mode_current_dir += "/" + self.lib_mode_current_items[self.lib_mode_scroll_position]
-                self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
-                if os.path.isfile(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[0]):
-                    self.lib_mode_current_items.insert(0, "Play Album")
-                self.lib_mode_scroll_position = 0
-                self.lib_mode_arrow_position_top = True
+                if self.lib_mode_current_items[self.lib_mode_scroll_position] == "Play Album":
+                    self.play_audio(self.lib_mode_current_dir + "/*")
+                    return
+                elif os.path.isfile(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[self.lib_mode_scroll_position]):
+                    self.play_audio(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[self.lib_mode_scroll_position])
+                    return
+                else:
+                    self.lib_mode_current_dir += "/" + self.lib_mode_current_items[self.lib_mode_scroll_position]
+                    self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
+                    if os.path.isfile(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[0]):
+                        self.lib_mode_current_items.insert(0, "Play Album")
+                    self.lib_mode_scroll_position = 0
+                    self.lib_mode_arrow_position_top = True
+
             if btn == "left":
                 if self.lib_mode_current_dir == self.lib_mode_root_dir and self.lib_mode_selecting_letter == False:
                     self.lib_mode_selecting_letter = True
@@ -145,6 +154,17 @@ class PiSample:
             self.lib_mode_current_items = sorted(filter(only_current_letter, self.lib_mode_current_items))
 
         self.mode_lib_menu()
+    
+
+    def play_audio(self, fp):
+        self.lcd.clear()
+        self.lcd.message("Playing!")
+        subprocess.Popen(["/usr/bin/killall", "mplayer"], stdout = subprocess.PIPE)
+        print "WOO"
+        subprocess.Popen(["/usr/bin/mplayer", fp], stdout = subprocess.PIPE)
+        print "Doo"
+
+        
 
     # Button Handler
     def button_press(self, btn):
