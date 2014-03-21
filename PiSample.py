@@ -75,14 +75,14 @@ class PiSample:
             row_2 = ""
 
             if self.lib_mode_arrow_position_top:
-                row_1 = (str(chr(126))) + self.lib_mode_current_items[self.lib_mode_scroll_position]
+                row_1 = (str(chr(126))) + (self.lib_mode_current_items[self.lib_mode_scroll_position])[0:15]
             elif self.lib_mode_scroll_position != 0:
-                row_1 = " " + self.lib_mode_current_items[self.lib_mode_scroll_position - 1]
+                row_1 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position - 1])[0:15]
 
             if not self.lib_mode_arrow_position_top:
-                row_2 = (str(chr(126))) + self.lib_mode_current_items[self.lib_mode_scroll_position]
+                row_2 = (str(chr(126))) + (self.lib_mode_current_items[self.lib_mode_scroll_position])[0:15]
             elif self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
-                row_2 = " " + self.lib_mode_current_items[self.lib_mode_scroll_position + 1]
+                row_2 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position + 1])[0:15]
 
             message = row_1 + "\n" + row_2
             
@@ -108,11 +108,19 @@ class PiSample:
             if btn == "up" and self.lib_mode_scroll_position != 0:
                 self.lib_mode_scroll_position -= 1
                 self.lib_mode_arrow_position_top = True
-            if btn == "select":
-                self.lib_mode_arrow_position_top = True
-                self.lib_mode_scroll_position = 0
+            if btn == "select" or btn == "right":
                 self.lib_mode_current_dir += "/" + self.lib_mode_current_items[self.lib_mode_scroll_position]
                 self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
+                self.lib_mode_scroll_position = 0
+                self.lib_mode_arrow_position_top = True
+            if btn == "left":
+                if self.lib_mode_current_dir == self.lib_mode_root_dir and self.lib_mode_selecting_letter == False:
+                    self.lib_mode_selecting_letter = True
+                else:
+                    self.lib_mode_arrow_position_top = True
+                    self.lib_mode_scroll_position = 0
+                    self.lib_mode_current_dir = os.path.abspath(os.path.join(self.lib_mode_current_dir + "/.."))
+                    self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
 
         if self.lib_mode_current_dir == self.lib_mode_root_dir:
             def only_current_letter(x):
