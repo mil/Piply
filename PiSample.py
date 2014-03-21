@@ -13,7 +13,7 @@ class PiSample:
     curr_char = 0
 
     main_mode_selected_index = 0
-    main_mode_options = ("Lib", "Smpl", "Now")
+    main_mode_options = ("Now", "Lib", "Smpl")
 
     lib_mode_root_dir = "/mnt/x300"
     lib_mode_current_dir = "/mnt/x300"
@@ -37,7 +37,7 @@ class PiSample:
 
     # Main Mode
     def mode_main_menu(self):
-        message = "pisample " + chr(226) + "\n"
+        message = "    Pisample    \n"
         for index, option in enumerate(self.main_mode_options):
             if index == self.main_mode_selected_index:
                 message += str(chr(126))
