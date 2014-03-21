@@ -67,7 +67,7 @@ class PiSample:
 
         if self.lib_mode_current_dir == self.lib_mode_root_dir and self.lib_mode_selecting_letter:
             for idx, letter in enumerate(self.letters):
-                message += ("\n" if idx == 13 else "")
+                message += ("  ^\n" if idx == 13 else "")
                 message += (letter.upper() if self.lib_mode_letter_position == idx else letter)    
         else:
             # Only sow current letter for artist
@@ -78,6 +78,16 @@ class PiSample:
                 row_1 = (str(chr(126))) + (self.lib_mode_current_items[self.lib_mode_scroll_position])[0:15]
             elif self.lib_mode_scroll_position != 0:
                 row_1 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position - 1])[0:15]
+
+            rwl = list(row_1)
+            blank_space = len(rwl)
+            if blank_space < 15:
+                while blank_space <= 15:
+                    rwl.append(" ")
+                    blank_space+=1
+            rwl[15] = "<"
+            row_1 = "".join(rwl)
+
 
             if not self.lib_mode_arrow_position_top:
                 row_2 = (str(chr(126))) + (self.lib_mode_current_items[self.lib_mode_scroll_position])[0:15]
@@ -100,6 +110,11 @@ class PiSample:
                 self.lib_mode_arrow_position_top = True
                 self.lib_mode_scroll_position = 0
                 self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
+            if btn == "up":
+                self.mode = "main"
+                self.mode_main_menu()
+                return
+
 
         else:
             if btn == "down" and self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
