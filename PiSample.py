@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 import os
+import datetime
 from time import sleep
 from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 from mplayer import Player
 
 class PiSample:
+    # Mplayer Setup
     player = Player()
     player.exec_path = "/usr/bin/mplayer"
-    player_state = 'paused'
+
     letters = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
     lcd  = None
     last_button = None
@@ -18,6 +20,12 @@ class PiSample:
     main_mode_selected_index = 0
     main_mode_options = ("Now", "Lib", "Smpl")
 
+
+    # Can switch to from lib/main/smpl screens
+    now_mode_returns_to = 'main'
+    now_mode_player_state= 'paused'
+    now_mode_pitch_seek = 'seek' 
+
     lib_mode_root_dir = "/mnt/x300"
     lib_mode_current_dir = "/mnt/x300"
     lib_mode_current_items =  ()
@@ -25,6 +33,7 @@ class PiSample:
     lib_mode_letter_position = 0
     lib_mode_selecting_letter = True
     lib_mode_arrow_position_top = True
+
 
     def __init__(self):
         self.lcd = Adafruit_CharLCDPlate()
@@ -54,10 +63,8 @@ class PiSample:
 
     def mode_main_btn(self, btn):
         if btn == "select":
-            if self.main_mode_options[self.main_mode_selected_index] == "Lib":
-                self.mode = "Lib"
-                self.mode_lib_menu()
-                return
+            self.set_mode(self.main_mode_options[self.main_mode_selected_index])
+            return
 
         if btn == "left" and self.main_mode_selected_index != 0:
             self.main_mode_selected_index -= 1
@@ -66,14 +73,14 @@ class PiSample:
         self.mode_main_menu()
 
 
-
+    # Lib Mode -- filebrowser
     def mode_lib_menu(self): 
         message = ""
 
         if self.lib_mode_current_dir == self.lib_mode_root_dir and self.lib_mode_selecting_letter:
-            message += "< "
+            message += "^ "
             for idx, letter in enumerate(self.letters):
-                message += ("\n  " if idx == 13 else "")
+                message += ("\nD " if idx == 13 else "")
                 message += ((str(chr(126)) + letter.upper()) if self.lib_mode_letter_position == idx else letter)    
         else:
             # Only sow current letter for artist
@@ -91,7 +98,7 @@ class PiSample:
                 while blank_space <= 15:
                     rwl.append(" ")
                     blank_space+=1
-            rwl[15] = "<"
+            #rwl[15] = "<"
             row_1 = "".join(rwl)
 
 
@@ -107,22 +114,21 @@ class PiSample:
 
     def mode_lib_btn(self, btn):
         if self.lib_mode_selecting_letter:
-            if btn == "right":
+            # Selecting Top level letter
+            if btn == "down":
                 self.lib_mode_letter_position = min(self.lib_mode_letter_position + 1, 25)
-            if btn == "left":
+            if btn == "up":
                 self.lib_mode_letter_position = max(self.lib_mode_letter_position - 1, 0)
             if btn == "select":
                 self.lib_mode_selecting_letter = False
                 self.lib_mode_arrow_position_top = True
                 self.lib_mode_scroll_position = 0
                 self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
-            if btn == "up":
-                self.mode = "main"
-                self.mode_main_menu()
+            if btn == "left":
+                self.set_mode("main")
                 return
-
-
         else:
+            # File browser
             if btn == "down" and self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
                 self.lib_mode_scroll_position += 1
                 self.lib_mode_arrow_position_top = False
@@ -159,27 +165,114 @@ class PiSample:
             self.lib_mode_current_items = sorted(filter(only_current_letter, self.lib_mode_current_items))
 
         self.mode_lib_menu()
+
+
+    def secs_to_formatted(self, secs):
+        secs = int(secs)
+        mins = 0
+        while secs >= 60:
+            mins += 1
+            secs -= 60
+        mins = str(mins)
+        secs = str(secs)
+        if len(secs) == 1:
+            secs = "0" + secs
+        return mins + ":" + secs
+
+    def mode_now_menu(self):
+        line_1 = ""
+        line_2 = ""
+
+        line_1 += ">" if self.now_mode_player_state == "playing" else "P"
+        line_1 += " " + self.player.filename
+
+        line_2 += str(chr(126)) if self.now_mode_pitch_seek == "seek" else ""
+        line_2 += self.secs_to_formatted(self.player.time_pos) + "/"
+        line_2 += self.secs_to_formatted(self.player.length) + " "
+        line_2 += str(chr(126)) if self.now_mode_pitch_seek == "speed" else ""
+        line_2 += str("%.2f" % self.player.speed) + "x"
+
+
+        message = line_1 + "\n" + line_2
+        self.lcd.clear()
+        self.lcd.message(message)
+
+    def mode_now_btn(self, btn):
+        if btn == "left":
+            self.set_mode(self.now_mode_returns_to)
+            return
+
+        if self.now_mode_pitch_seek == "seek":
+            if btn == "down":
+                self.player.time_pos -= 2
+            if btn == "up":
+                self.player.time_pos += 2
+            if btn == "right":
+                self.now_mode_pitch_seek = "speed"
+    
+        elif self.now_mode_pitch_seek == "speed":
+            if btn == "down":
+                self.player.speed -= 0.02
+            if btn == "up":
+                self.player.speed += 0.02
+            if btn == "right":
+                self.now_mode_pitch_seek = "seek"
+
+
+        if btn == "select":
+            if self.now_mode_player_state == "paused":
+                self.now_mode_player_state = "playing"
+            else:
+                self.now_mode_player_state = "paused"
+            self.player.pause()
+
+
+        self.mode_now_menu()
+
+
+
     
 
     def play_audio(self, fp):
-        self.lcd.clear()
-        self.lcd.message("Playing!")
+        # Plays audio and sets mode to Now
         self.player.loadfile(fp)
-        if self.player_state == 'paused':
+        if self.now_mode_player_state == 'paused':
             self.player.pause()
-            self.player_state = 'playing'
+            self.now_mode_player_state = 'playing'
+        self.set_mode("Now")
 
-        
+    def redraw_menu(self):
+        if self.mode == "main":
+            self.mode_main_menu()
+        elif self.mode == "Now":
+            self.mode_now_menu()
+        elif self.mode == "Lib":
+            self.mode_lib_menu()
+
+    def set_mode(self, new_mode):
+        self.now_mode_returns_to = self.mode
+        self.mode = new_mode
+        self.redraw_menu()
 
     # Button Handler
     def button_press(self, btn):
-        if self.mode is "main":
-            #self.mode_char_test()
+        if self.mode == "main":
             self.mode_main_btn(btn)
-        elif self.mode is "Lib":
+        elif self.mode == "Now":
+            self.mode_now_btn(btn)
+        elif self.mode == "Lib":
             self.mode_lib_btn(btn)
+
     def loop(self):
+        last_date = datetime.datetime.now()
         while True:
+            now = datetime.datetime.now()
+            difference = now - last_date
+            mins_secs = divmod(difference.days * 86400 + difference.seconds, 60)
+            if mins_secs[0] > 0 or mins_secs[1] > 0.8:
+                last_date = now
+                self.redraw_menu()
+
             current_button = None
             if self.lcd.buttonPressed(self.lcd.LEFT):
                 current_button = "left"
