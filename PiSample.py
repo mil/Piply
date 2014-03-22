@@ -203,29 +203,31 @@ class PiSample:
             return
 
         if self.now_mode_pitch_seek == "seek":
-            if btn == "down":
-                self.player.time_pos -= 2
-            if btn == "up":
+            if btn == "down": 
+                if self.player.time_pos <= 2:
+                    self.player.time_pos = 0
+                else:
+                    self.player.time_pos -= 2
+            if btn == "up" and self.player.time_pos + 2 < self.player.length:
                 self.player.time_pos += 2
             if btn == "right":
                 self.now_mode_pitch_seek = "speed"
+            if btn == "select":
+                if self.now_mode_player_state == "paused":
+                    self.now_mode_player_state = "playing"
+                else:
+                    self.now_mode_player_state = "paused"
+                self.player.pause()
     
         elif self.now_mode_pitch_seek == "speed":
             if btn == "down":
                 self.player.speed -= 0.02
             if btn == "up":
                 self.player.speed += 0.02
+            if btn == "select":
+                self.player.speed = 1
             if btn == "right":
                 self.now_mode_pitch_seek = "seek"
-
-
-        if btn == "select":
-            if self.now_mode_player_state == "paused":
-                self.now_mode_player_state = "playing"
-            else:
-                self.now_mode_player_state = "paused"
-            self.player.pause()
-
 
         self.mode_now_menu()
 
