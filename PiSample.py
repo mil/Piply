@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import os
 import datetime
+import tempfile
 from time import sleep
 from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 from mplayer import Player
@@ -14,6 +15,7 @@ class PiSample:
     lcd  = None
     last_button = None
     mode = "main"
+    seconds_counter = 0
 
     curr_char = 0
 
@@ -72,6 +74,14 @@ class PiSample:
             self.main_mode_selected_index += 1
         self.mode_main_menu()
 
+    def marquee_text(self, text, chars_width):
+        if len(text) < chars_width:
+            return text
+        chars_to_scroll = len(text) - chars_width
+        offset = int(chars_to_scroll * (float(self.seconds_counter) / float(5)))
+        if offset + chars_width > len(text):
+            return text[0: chars_width - 1]
+        return text[offset: offset + chars_width]
 
     # Lib Mode -- filebrowser
     def mode_lib_menu(self): 
@@ -88,7 +98,7 @@ class PiSample:
             row_2 = ""
 
             if self.lib_mode_arrow_position_top:
-                row_1 = (str(chr(126))) + (self.lib_mode_current_items[self.lib_mode_scroll_position])[0:15]
+                row_1 = (str(chr(126))) + self.marquee_text(self.lib_mode_current_items[self.lib_mode_scroll_position], 15)
             elif self.lib_mode_scroll_position != 0:
                 row_1 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position - 1])[0:15]
 
@@ -103,7 +113,7 @@ class PiSample:
 
 
             if not self.lib_mode_arrow_position_top:
-                row_2 = (str(chr(126))) + (self.lib_mode_current_items[self.lib_mode_scroll_position])[0:15]
+                row_2 = (str(chr(126))) + self.marquee_text(self.lib_mode_current_items[self.lib_mode_scroll_position], 15)
             elif self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
                 row_2 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position + 1])[0:15]
 
@@ -123,6 +133,7 @@ class PiSample:
                 self.lib_mode_selecting_letter = False
                 self.lib_mode_arrow_position_top = True
                 self.lib_mode_scroll_position = 0
+                self.seconds_counter = 0
                 self.lib_mode_current_items = sorted(os.listdir(self.lib_mode_current_dir))
             if btn == "left":
                 self.set_mode("main")
@@ -132,12 +143,16 @@ class PiSample:
             if btn == "down" and self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
                 self.lib_mode_scroll_position += 1
                 self.lib_mode_arrow_position_top = False
+                self.seconds_counter = 0
+
             if btn == "up" and self.lib_mode_scroll_position != 0:
                 self.lib_mode_scroll_position -= 1
                 self.lib_mode_arrow_position_top = True
+                self.seconds_counter = 0
+
             if btn == "select" or btn == "right":
                 if self.lib_mode_current_items[self.lib_mode_scroll_position] == "Play Album":
-                    self.play_audio(self.lib_mode_current_dir + "/*")
+                    self.play_audio(self.lib_mode_current_dir + "/")
                     return
                 elif os.path.isfile(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[self.lib_mode_scroll_position]):
                     self.play_audio(self.lib_mode_current_dir + "/" + self.lib_mode_current_items[self.lib_mode_scroll_position])
@@ -183,8 +198,16 @@ class PiSample:
         line_1 = ""
         line_2 = ""
 
-        line_1 += ">" if self.now_mode_player_state == "playing" else "P"
-        line_1 += " " + self.player.filename
+        metadata = self.player.metadata or {}
+        artist = metadata.get('Artist', '')
+        album = metadata.get('Album', '')
+        year = metadata.get('Year', '')
+        title = metadata.get('Title', '')
+
+        line_1 += "> " if self.now_mode_player_state == "playing" else "P "
+        line_1 += self.marquee_text(title + " - " + artist + ", " + album + "(" + year + ") ", 14)
+
+
 
         line_2 += str(chr(126)) if self.now_mode_pitch_seek == "seek" else ""
         line_2 += self.secs_to_formatted(self.player.time_pos) + "/"
@@ -237,7 +260,18 @@ class PiSample:
 
     def play_audio(self, fp):
         # Plays audio and sets mode to Now
-        self.player.loadfile(fp)
+        if os.path.isfile(fp):
+            self.player.loadfile(fp)
+            sleep(0.2)
+        else:
+            playlist = tempfile.NamedTemporaryFile(delete=False)
+            with playlist as temp_file:
+                for idx, f in enumerate(sorted(os.listdir(fp))):
+                    temp_file.write(fp + f + "\n")
+            self.player.loadlist(playlist.name, 0)
+            sleep(0.2)
+            os.remove(playlist.name)
+
         if self.now_mode_player_state == 'paused':
             self.player.pause()
             self.now_mode_player_state = 'playing'
@@ -271,6 +305,12 @@ class PiSample:
             now = datetime.datetime.now()
             difference = now - last_date
             mins_secs = divmod(difference.days * 86400 + difference.seconds, 60)
+
+            self.seconds_counter += mins_secs[0] * 60
+            self.seconds_counter += mins_secs[1]
+            if self.seconds_counter >= 6:
+                self.seconds_counter = 0
+
             if mins_secs[0] > 0 or mins_secs[1] > 0.8:
                 last_date = now
                 self.redraw_menu()
