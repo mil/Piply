@@ -27,19 +27,32 @@ class PiSample:
     main_mode_selected_index = 0
     main_mode_options = ("Now", "Lib", "Smp", "Cfg")
 
-
-    # Can switch to from lib/main/smpl screens
     now_mode_returns_to = 'main'
-    now_mode_player_state= 'paused'
     now_mode_pitch_seek = 'seek' 
 
-    lib_mode_root_dir = "/mnt/x300"
-    lib_mode_current_dir = "/mnt/x300"
     lib_mode_current_items =  ()
-    lib_mode_scroll_position = 0
-    lib_mode_letter_position = 0
-    lib_mode_selecting_letter = True
-    lib_mode_arrow_position_top = True
+    lib_mode_root_dir, lib_mode_current_dir = "/mnt/x300", "/mnt/x300"
+    lib_mode_scroll_position, lib_mode_letter_position = 0, 0
+    lib_mode_selecting_letter, lib_mode_arrow_position_top = True, True
+
+    def marquee_text(self, text, chars_width):
+        if len(text) < chars_width:
+            return text
+        chars_to_scroll = len(text) - chars_width
+        offset = int(chars_to_scroll * (float(self.seconds_counter) / float(5)))
+        if offset + chars_width > len(text):
+            return text[0: chars_width - 1]
+        return text[offset: offset + chars_width]
+
+    def secs_to_formatted(self, secs):
+        secs, mins = int(secs), 0
+        while secs >= 60:
+            mins += 1
+            secs -= 60
+        mins, secs = str(mins),  str(secs)
+        if len(secs) == 1:
+            secs = "0" + secs
+        return mins + ":" + secs
 
 
     def __init__(self):
@@ -54,6 +67,7 @@ class PiSample:
         symb = chr(self.curr_char)
         self.lcd.message("Chr " + str(self.curr_char) + " " + symb)
         self.curr_char += 1
+
 
     # Main Mode
     def mode_main_menu(self):
@@ -71,21 +85,13 @@ class PiSample:
         if btn == "select":
             self.set_mode(self.main_mode_options[self.main_mode_selected_index])
             return
-
         if btn == "left" and self.main_mode_selected_index != 0:
             self.main_mode_selected_index -= 1
         if btn == "right" and self.main_mode_selected_index + 1 != len(self.main_mode_options):
             self.main_mode_selected_index += 1
         self.mode_main_menu()
 
-    def marquee_text(self, text, chars_width):
-        if len(text) < chars_width:
-            return text
-        chars_to_scroll = len(text) - chars_width
-        offset = int(chars_to_scroll * (float(self.seconds_counter) / float(5)))
-        if offset + chars_width > len(text):
-            return text[0: chars_width - 1]
-        return text[offset: offset + chars_width]
+
 
     # Lib Mode -- filebrowser
     def mode_lib_menu(self): 
@@ -94,7 +100,7 @@ class PiSample:
         if self.lib_mode_current_dir == self.lib_mode_root_dir and self.lib_mode_selecting_letter:
             message += "^ "
             for idx, letter in enumerate(self.letters):
-                message += ("\nD " if idx == 13 else "")
+                message += ("\nv " if idx == 13 else "")
                 message += ((str(chr(126)) + letter.upper()) if self.lib_mode_letter_position == idx else letter)    
         else:
             # Only sow current letter for artist
@@ -105,16 +111,6 @@ class PiSample:
                 row_1 = (str(chr(126))) + self.marquee_text(self.lib_mode_current_items[self.lib_mode_scroll_position], 15)
             elif self.lib_mode_scroll_position != 0:
                 row_1 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position - 1])[0:15]
-
-            rwl = list(row_1)
-            blank_space = len(rwl)
-            if blank_space <= 15:
-                while blank_space <= 15:
-                    rwl.append(" ")
-                    blank_space+=1
-            #rwl[15] = "<"
-            row_1 = "".join(rwl)
-
 
             if not self.lib_mode_arrow_position_top:
                 row_2 = (str(chr(126))) + self.marquee_text(self.lib_mode_current_items[self.lib_mode_scroll_position], 15)
@@ -185,33 +181,20 @@ class PiSample:
 
         self.mode_lib_menu()
 
-
-    def secs_to_formatted(self, secs):
-        secs = int(secs)
-        mins = 0
-        while secs >= 60:
-            mins += 1
-            secs -= 60
-        mins = str(mins)
-        secs = str(secs)
-        if len(secs) == 1:
-            secs = "0" + secs
-        return mins + ":" + secs
-
     def mode_now_menu(self):
-        line_1 = ""
-        line_2 = ""
+        if self.player.length == None or self.player.time_pos == None:
+            self.set_mode(self.now_mode_returns_to)
+            return
 
+        line_1, line_2 = "", ""
         metadata = self.player.metadata or {}
         artist = metadata.get('Artist', '')
         album = metadata.get('Album', '')
         year = metadata.get('Year', '')
         title = metadata.get('Title', '')
 
-        line_1 += "> " if self.now_mode_player_state == "playing" else "P "
+        line_1 += "> " if not self.player.paused else "P "
         line_1 += self.marquee_text(title + " - " + artist + ", " + album + "(" + year + ") ", 14)
-
-
 
         line_2 += str(chr(126)) if self.now_mode_pitch_seek == "seek" else ""
         line_2 += self.secs_to_formatted(self.player.time_pos) + "/"
@@ -219,10 +202,8 @@ class PiSample:
         line_2 += str(chr(126)) if self.now_mode_pitch_seek == "speed" else ""
         line_2 += str("%.2f" % self.player.speed) + "x"
 
-
-        message = line_1 + "\n" + line_2
         self.lcd.clear()
-        self.lcd.message(message)
+        self.lcd.message(line_1 + "\n" + line_2)
 
     def mode_now_btn(self, btn):
         if btn == "left":
@@ -240,17 +221,11 @@ class PiSample:
             if btn == "right":
                 self.now_mode_pitch_seek = "speed"
             if btn == "select":
-                if self.now_mode_player_state == "paused":
-                    self.now_mode_player_state = "playing"
-                else:
-                    self.now_mode_player_state = "paused"
                 self.player.pause()
     
         elif self.now_mode_pitch_seek == "speed":
-            if btn == "down":
-                self.player.speed -= 0.02
-            if btn == "up":
-                self.player.speed += 0.02
+            if btn == "down" or  btn == "up":
+                self.player.speed += (0.02 if btn == "up" else -0.02)
             if btn == "select":
                 self.player.speed = 1
             if btn == "right":
@@ -288,9 +263,9 @@ class PiSample:
             sleep(0.2)
             os.remove(playlist.name)
 
-        if self.now_mode_player_state == 'paused':
+        if self.player.paused:
             self.player.pause()
-            self.now_mode_player_state = 'playing'
+
         self.set_mode("Now")
 
     def redraw_menu(self):
