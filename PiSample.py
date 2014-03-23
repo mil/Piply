@@ -8,11 +8,17 @@ from mplayer import Player
 
 class PiSample:
     # Mplayer Setup
-    player = Player()
-    player.exec_path = "/usr/bin/mplayer"
+    player, player.exec_path = Player(), "/usr/bin/mplayer"
 
-    letters = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z')
-    lcd  = None
+    letters = (
+            'a', 'b', 'c', 'd', 'e', 'f', 
+            'g', 'h', 'i', 'j', 'k', 'l', 
+            'm', 'n', 'o', 'p', 'q', 'r', 
+            's', 't', 'u', 'v', 'w', 'x', 
+            'y', 'z'
+            )
+
+    lcd = None
     last_button = None
     mode = "main"
     seconds_counter = 0
@@ -20,7 +26,7 @@ class PiSample:
     curr_char = 0
 
     main_mode_selected_index = 0
-    main_mode_options = ("Now", "Lib", "Smpl")
+    main_mode_options = ("Now", "Lib", "Smp", "Cfg")
 
 
     # Can switch to from lib/main/smpl screens
@@ -52,14 +58,13 @@ class PiSample:
 
     # Main Mode
     def mode_main_menu(self):
-        message = "    Pisample    \n"
+        message = "    Pisample\n"
         for index, option in enumerate(self.main_mode_options):
             if index == self.main_mode_selected_index:
                 message += str(chr(126))
             else:
                 message += " "
-            message += option
-            message += " "
+            message += option + ""
         self.lcd.clear()
         self.lcd.message(message)
 
@@ -255,8 +260,20 @@ class PiSample:
         self.mode_now_menu()
 
 
+    def mode_smp_menu(self):
+        self.lcd.clear()
+        self.lcd.message("sampler")
+    def mode_smp_btn(self, btn):
+        if btn == "left":
+            self.set_mode("main")
 
-    
+
+    def mode_cfg_menu(self):
+        self.lcd.clear()
+        self.lcd.message("config")
+    def mode_cfg_btn(self, btn):
+        if btn == "left":
+            self.set_mode("main")
 
     def play_audio(self, fp):
         # Plays audio and sets mode to Now
@@ -284,6 +301,10 @@ class PiSample:
             self.mode_now_menu()
         elif self.mode == "Lib":
             self.mode_lib_menu()
+        elif self.mode == "Cfg":
+            self.mode_cfg_menu()
+        elif self.mode == "Smp":
+            self.mode_smp_menu()
 
     def set_mode(self, new_mode):
         self.now_mode_returns_to = self.mode
@@ -298,6 +319,10 @@ class PiSample:
             self.mode_now_btn(btn)
         elif self.mode == "Lib":
             self.mode_lib_btn(btn)
+        elif self.mode == "Cfg":
+            self.mode_cfg_btn(btn)
+        elif self.mode == "Smp":
+            self.mode_smp_btn(btn)
 
     def loop(self):
         last_date = datetime.datetime.now()
