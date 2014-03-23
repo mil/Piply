@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-import os
-import datetime
-import tempfile
 from time import sleep
-from Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
+import os, sys, datetime, tempfile
+sys.path.insert(0, './modules')
+from Adafruit.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 from mplayer import Player
 
 class PiSample:
