@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from time import sleep
 import os, sys, datetime, tempfile
+import alsaaudio
 sys.path.insert(0, './modules')
 from Adafruit.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 from mplayer import Player
@@ -10,11 +11,9 @@ class PiSample:
     player, player.exec_path = Player(), "/usr/bin/mplayer"
 
     letters = (
-            'a', 'b', 'c', 'd', 'e', 'f', 
-            'g', 'h', 'i', 'j', 'k', 'l', 
-            'm', 'n', 'o', 'p', 'q', 'r', 
-            's', 't', 'u', 'v', 'w', 'x', 
-            'y', 'z'
+            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 
+            'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 
+            's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
             )
 
     lcd = None
@@ -71,7 +70,10 @@ class PiSample:
 
     # Main Mode
     def mode_main_menu(self):
-        message = "    Pisample\n"
+        message = "   "
+        if self.player.filename != None:
+            message += "P " if self.player.paused else "> "
+        message += "Pisample\n"
         for index, option in enumerate(self.main_mode_options):
             if index == self.main_mode_selected_index:
                 message += str(chr(126))
@@ -103,19 +105,40 @@ class PiSample:
                 message += ("\nv " if idx == 13 else "")
                 message += ((str(chr(126)) + letter.upper()) if self.lib_mode_letter_position == idx else letter)    
         else:
-            # Only sow current letter for artist
-            row_1 = ""
-            row_2 = ""
+            # Only show current letter for artist
+            row_1, row_2, top_fh, bottom_fh = "", "", "", ""
+
+            def is_playing(fh):
+                return self.player.filename == fh
 
             if self.lib_mode_arrow_position_top:
-                row_1 = (str(chr(126))) + self.marquee_text(self.lib_mode_current_items[self.lib_mode_scroll_position], 15)
-            elif self.lib_mode_scroll_position != 0:
-                row_1 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position - 1])[0:15]
+                row_1 += (str(chr(126)))
+                top_fh = self.lib_mode_current_items[self.lib_mode_scroll_position]
+            else:
+                row_1 += " "
+                if self.lib_mode_scroll_position != 0:
+                    top_fh = self.lib_mode_current_items[self.lib_mode_scroll_position - 1]
 
+            
             if not self.lib_mode_arrow_position_top:
-                row_2 = (str(chr(126))) + self.marquee_text(self.lib_mode_current_items[self.lib_mode_scroll_position], 15)
-            elif self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
-                row_2 = " " + (self.lib_mode_current_items[self.lib_mode_scroll_position + 1])[0:15]
+                row_2 += (str(chr(126)))
+                bottom_fh = self.lib_mode_current_items[self.lib_mode_scroll_position]
+            else:
+                row_2 += " "
+                if self.lib_mode_scroll_position != len(self.lib_mode_current_items) - 1:
+                    bottom_fh = self.lib_mode_current_items[self.lib_mode_scroll_position + 1]
+
+            row_1 += self.marquee_text(top_fh, 15) if self.lib_mode_arrow_position_top else top_fh
+            row_2 += self.marquee_text(bottom_fh, 15) if not self.lib_mode_arrow_position_top else bottom_fh 
+
+            #if is_playing(top_fh):
+            #    row_1 += "P" if self.player.paused else ">"
+            #if is_playing(bottom_fh):
+            #    row_2 += "P" if self.player.paused else ">"
+            if len(row_1) > 16:
+                row_1 = row_1[0:15]
+            if len(row_2) > 16:
+                row_2 = row_2[0:15]
 
             message = row_1 + "\n" + row_2
             
@@ -243,11 +266,25 @@ class PiSample:
 
 
     def mode_cfg_menu(self):
+        message = ""
+
+        message += "Vol "
+        message += str(int(alsaaudio.Mixer("PCM").getvolume()[0]))
+        message += "%"
+
         self.lcd.clear()
-        self.lcd.message("config")
+        self.lcd.message(message)
+
     def mode_cfg_btn(self, btn):
         if btn == "left":
             self.set_mode("main")
+        if btn == "up" or btn == "down":
+            v = int(alsaaudio.Mixer("PCM").getvolume()[0])
+            v += 2 if btn == "up" else -2
+            v = min(max(0,v), 100)
+            alsaaudio.Mixer("PCM").setvolume(v, 0)
+
+        self.mode_cfg_menu()
 
     def play_audio(self, fp):
         # Plays audio and sets mode to Now
@@ -263,7 +300,7 @@ class PiSample:
             sleep(0.2)
             os.remove(playlist.name)
 
-        if self.player.paused:
+        if self.player.paused != False:
             self.player.pause()
 
         self.set_mode("Now")
