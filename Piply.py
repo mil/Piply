@@ -6,33 +6,28 @@ sys.path.insert(0, './modules')
 from Adafruit.Adafruit_CharLCDPlate import Adafruit_CharLCDPlate
 from mplayer import Player
 
-class PiSample:
-    # Mplayer Setup
+class Piply:
     player, player.exec_path = Player(), "/usr/bin/mplayer"
-
     letters = (
             'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 
             'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 
             's', 't', 'u', 'v', 'w', 'x', 'y', 'z'
             )
+    lcd, last_button, mode, seconds_counter, curr_char = None, None, "main", 0, 0
 
-    lcd = None
-    last_button = None
-    mode = "main"
-    seconds_counter = 0
-
-    curr_char = 0
-
-    main_mode_selected_index = 0
-    main_mode_options = ("Now", "Lib", "Cfg")
-
-    now_mode_returns_to = 'main'
-    now_mode_pitch_seek = 'seek' 
-
+    main_mode_selected_index, main_mode_options = 0, ("Now", "Lib", "Cfg")
+    now_mode_returns_to, now_mode_pitch_seek = 'main', 'seek'
     lib_mode_current_items =  ()
     lib_mode_root_dir, lib_mode_current_dir = "/mnt/x61", "/mnt/x61"
     lib_mode_scroll_position, lib_mode_letter_position = 0, 0
     lib_mode_selecting_letter, lib_mode_arrow_position_top = True, True
+
+    def __init__(self):
+        self.lcd = Adafruit_CharLCDPlate()
+        self.lcd.clear()
+        self.mode_main_menu()
+        #self.mode_char_test()
+        self.loop() 
 
     def marquee_text(self, text, chars_width):
         if len(text) < chars_width:
@@ -53,13 +48,6 @@ class PiSample:
             secs = "0" + secs
         return mins + ":" + secs
 
-
-    def __init__(self):
-        self.lcd = Adafruit_CharLCDPlate()
-        self.lcd.clear()
-        self.mode_main_menu()
-        #self.mode_char_test()
-        self.loop()
 
     def mode_char_test(self):
         self.lcd.clear()
@@ -373,4 +361,4 @@ class PiSample:
 
 
 
-PiSample()
+Piply()
