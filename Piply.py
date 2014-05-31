@@ -296,16 +296,12 @@ class Piply:
         self.set_mode("Now")
 
     def redraw_menu(self):
-        if self.mode == "main":
-            self.mode_main_menu()
-        elif self.mode == "Now":
-            self.mode_now_menu()
-        elif self.mode == "Lib":
-            self.mode_lib_menu()
-        elif self.mode == "Cfg":
-            self.mode_cfg_menu()
-        elif self.mode == "Smp":
-            self.mode_smp_menu()
+        {
+            "main" : self.mode_main_menu,
+            "Now"  : self.mode_now_menu,
+            "Lib"  : self.mode_lib_menu,
+            "Cfg"  : self.mode_cfg_menu
+        }[self.mode]()
 
     def set_mode(self, new_mode):
         self.now_mode_returns_to = self.mode
