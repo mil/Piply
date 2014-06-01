@@ -1,5 +1,6 @@
 Piply
 =====
+![Piply UI](http://userbound.com/images/piply.gif)
 
 Interface for audio playback on the the Raspberry Pi. Built atop the Adafruit i2c 16x2 LCD Pi Plate. Intended to transform Raspberry Pi into standalone music playback device. 
 
