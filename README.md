@@ -1,6 +1,6 @@
 Piply - Rpi + LCD + Buttons + Your Music
 =========================================
-![Piply UI](http://userbound.com/images/piply.gif)
+![Piply UI](http://userbound.com/things/Piply/piply.gif)
 
 This is a simple UI for audio playback on the the Raspberry Pi. Built atop the [Adafruit i2c 16x2 LCD Pi Plate](http://www.adafruit.com/products/1115). UI built in Python2. Depends on Adafruit's `Adafruit_CharLCDPlate` and `mplayer.py`. Transforms your Raspberry Pi into standalone music playback device. 
 
